@@ -19,7 +19,7 @@ FORMAT: 1A
     + Attributes
         + status: 0 (number, required) - 取得結果
 
-## 劇場話まとめ登録 [/api/regist/matome{?url}]
+## 劇場話まとめ登録 [/api/regist/matome{?url,overwrite}]
 ### POST
 
 * まとめサイトの10話ごとのまとめページから画像・タイトル情報を取得して登録する
