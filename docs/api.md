@@ -19,6 +19,19 @@ FORMAT: 1A
     + Attributes
         + status: 0 (number, required) - 取得結果
 
+## 劇場話まとめ登録 [/api/regist/matome{?url}]
+### POST
+
+* まとめサイトの10話ごとのまとめページから画像・タイトル情報を取得して登録する
+
++ Parameters
+    + url: http://cggekijo.blog.fc2.com/blog-entry-1.html (string, required) - まとめサイトURL
+    + overwrite: false (bool, required) - 画像・データが既に登録されいても再設定を行うかどうか
+
++ Response 200 (application/json)
+    + Attributes
+        + status: 0 (number, required) - 取得結果（件数）
+
 ## 指定話取得 [/api/story/{number}]
 ### GET
 
