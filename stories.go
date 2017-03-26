@@ -18,7 +18,7 @@ type StoriesTable struct {
 }
 
 //InsertStory 劇場話数情報を追加する
-func InsertStory(number int, title string) error {
+func InsertStory(number int, title string, isOverWrite bool) error {
 	if number == 0 || title == "" {
 		return fmt.Errorf("パラメーターエラー")
 	}
@@ -40,19 +40,22 @@ func InsertStory(number int, title string) error {
 			return err
 		}
 	} else {
-		_, err := session.Update(tableName).
-			Set("title", record.Title).
-			Set("uptime", record.Uptime).
-			Where("number = ?", record.Number).
-			Exec()
-		if err != nil {
-			return err
+		if isOverWrite {
+			_, err := session.Update(tableName).
+				Set("title", record.Title).
+				Set("uptime", record.Uptime).
+				Where("number = ?", record.Number).
+				Exec()
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
+//selectStoryRecord 指定話数のレコードを検索して返す
 func selectStoryRecord(session *dbr.Session, number int) []StoriesTable {
 	var recordList []StoriesTable
 	_, err := session.Select("*").From(tableName).Where("number = ?", number).Load(&recordList)
@@ -82,4 +85,23 @@ func SelectStory(number int) (result StoriesTable) {
 
 	result = table[0]
 	return
+}
+
+//SelectAllNumber Numberの情報をすべて取得する（StoriesTableのNumberのみセットされている）
+func SelectAllNumber() []StoriesTable {
+	session := ConnectDB()
+	if session == nil {
+		fmt.Printf("SelectStory DB接続失敗")
+		return nil
+	}
+	defer session.Close()
+
+	var table []StoriesTable
+	_, err := session.Select("number").From(tableName).OrderBy("number").Load(&table)
+	if err != nil {
+		fmt.Printf("SelectStory err=" + err.Error())
+		return nil
+	}
+
+	return table
 }

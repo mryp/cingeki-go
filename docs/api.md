@@ -4,17 +4,16 @@ FORMAT: 1A
 
 # Group 登録処理関連
 
-## 劇場話登録 [/api/regist]
+## 劇場話登録 [/api/regist{?number,title,url}]
 ### POST
 
 * 指定したページURLから画像のURLを抽出して返却する
 * サイズ指定を行うとそのサイズ範囲内に合致した画像のみを返却する
 
-+ Request (application/json)
-    + Attributes
-        + url: http://hogehoge.com/xxx/yyy.jpg (string, required) - 画像URL
-        + number: 100 (number, required) - 話数
-        + title: 第〇〇話「ほげほげ」 (string, required) - タイトル
++ Parameters
+    + number: 100 (number, required) - 話数
+    + title: 第〇〇話「ほげほげ」 (string, required) - タイトル
+    + url: http://hogehoge.com/xxx/yyy.jpg (string, required) - 画像URL
 
 + Response 200 (application/json)
     + Attributes

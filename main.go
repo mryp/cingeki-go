@@ -13,6 +13,7 @@ func main() {
 	//ミドルウェア
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS()) //CORS対応（他ドメインからAJAX通信可能にする）
 
 	//ルーティング
 	e.GET("/", func(c echo.Context) error {
@@ -20,6 +21,7 @@ func main() {
 	})
 	apiGroup := e.Group("/api")
 	apiGroup.POST("/regist", RegistHandler)
+	apiGroup.POST("/regist/matome", RegistMatomeHandler)
 	apiGroup.GET("/story/:number", StoryHandler)
 	apiGroup.GET("/image/:number", ImageHandler)
 

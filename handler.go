@@ -31,6 +31,17 @@ type RegistResponce struct {
 	Status int
 }
 
+//RegistMatomeRequest まとめサイトからの登録リクエストデータ
+type RegistMatomeRequest struct {
+	URL       string `json:"url" xml:"url" form:"url" query:"url"`
+	OverWrite bool   `json:"overwrite" xml:"overwrite" form:"overwrite" query:"overwrite"`
+}
+
+//RegistMatomeResponce まとめサイトからの登録レスポンスデータ
+type RegistMatomeResponce struct {
+	Status int `json:"status" xml:"status"`
+}
+
 //SelectRequest データ選択リクエストデータ
 type SelectRequest struct {
 	Number int `json:"number" xml:"number" form:"number" query:"number"`
@@ -38,26 +49,22 @@ type SelectRequest struct {
 
 //SelectResponce データ選択レスポンスデータ
 type SelectResponce struct {
-	Status int
-	URL    string
-	Title  string
-	NextID int
-	PrevID int
+	Status int    `json:"status" xml:"status"`
+	URL    string `json:"url" xml:"url"`
+	Title  string `json:"title" xml:"title"`
+	NextID int    `json:"nextid" xml:"nextid"`
+	PrevID int    `json:"previd" xml:"previd"`
 }
 
-//RegistHandler 登録ハンドラ
+//RegistHandler 個別登録ハンドラ
 func RegistHandler(c echo.Context) error {
 	req := new(RegistRequest)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	fmt.Printf("request=%v", *req)
+	fmt.Printf("request=%v\n", *req)
 
-	if err := saveURLImage(req.URL, req.Number); err != nil {
-		return err
-	}
-
-	if err := InsertStory(req.Number, req.Title); err != nil {
+	if err := registStory(req.Number, req.Title, req.URL, true); err != nil {
 		return err
 	}
 
@@ -66,8 +73,46 @@ func RegistHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+//RegistMatomeHandler まとめサイトからの登録ハンドラ
+func RegistMatomeHandler(c echo.Context) error {
+	req := new(RegistMatomeRequest)
+	if err := c.Bind(req); err != nil {
+		return err
+	}
+	fmt.Printf("request=%v\n", *req)
+
+	storyList, err := MatomeToStoryList(req.URL)
+	if err != nil {
+		return err
+	}
+
+	for _, story := range storyList {
+		fmt.Printf("story item=%v\n", story)
+		if err := registStory(story.Number, story.Title, story.URL, req.OverWrite); err != nil {
+			return err
+		}
+	}
+
+	res := new(RegistMatomeResponce)
+	res.Status = len(storyList)
+	return c.JSON(http.StatusOK, res)
+}
+
+//registStory 指定した情報から画像の取得とDBへの保存を行う
+func registStory(number int, title string, imageURL string, isOverWrite bool) error {
+	if err := saveURLImage(imageURL, number, isOverWrite); err != nil {
+		return err
+	}
+
+	if err := InsertStory(number, title, isOverWrite); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 //saveURLImage 指定した画像URLをファイルとして保存する
-func saveURLImage(imageURL string, number int) error {
+func saveURLImage(imageURL string, number int, isOverWrite bool) error {
 	if imageURL == "" || number == 0 {
 		return fmt.Errorf("registURLImage パラメーターエラー")
 	}
@@ -76,8 +121,13 @@ func saveURLImage(imageURL string, number int) error {
 		os.Mkdir(ImageDir, 0777)
 	}
 	imageFilePath := getImageFilePath(ImageDir, number)
-	if _, err := os.Stat(imageFilePath); err == nil {
-		return nil //すでに保存済み
+	_, err := os.Stat(imageFilePath)
+	if err == nil { //ファイル情報が取得できた時
+		if isOverWrite {
+			os.Remove(imageFilePath) //上書きするため削除して処理続行
+		} else {
+			return nil //すでに保存済みのため正常を返す
+		}
 	}
 
 	response, err := http.Get(imageURL)
@@ -114,16 +164,36 @@ func StoryHandler(c echo.Context) error {
 		return fmt.Errorf("StoryHandler データなし")
 	}
 
+	//前後の値を取得するため番号のデータをすべて取得する
+	numberRecordList := SelectAllNumber()
+	numberIndex := -1
+	if numberRecordList != nil {
+		for i, story := range numberRecordList {
+			if number == story.Number {
+				numberIndex = i
+				break
+			}
+		}
+	}
+
 	res := new(SelectResponce)
 	res.Status = 0
 	res.NextID = 0
 	res.PrevID = 0
+	if numberIndex != -1 {
+		if numberIndex > 0 {
+			res.PrevID = numberRecordList[numberIndex-1].Number
+		}
+		if numberIndex != -1 && numberIndex < (len(numberRecordList)-1) {
+			res.NextID = numberRecordList[numberIndex+1].Number
+		}
+	}
 	res.Title = record.Title
 	res.URL = c.Scheme() + "://" + c.Request().Host + "/api/image/" + strconv.Itoa(record.Number)
 	return c.JSON(http.StatusOK, res)
 }
 
-//
+//ImageHandler 画像取得ハンドラ
 func ImageHandler(c echo.Context) error {
 	numberText := c.Param("number")
 	number, err := strconv.Atoi(numberText)
