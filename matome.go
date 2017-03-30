@@ -30,8 +30,9 @@ func MatomeToStoryList(URL string) ([]StoryItem, error) {
 	imageURLList := []string{}
 	doc.Find(".ently_text > div > a").Each(func(_ int, s *goquery.Selection) {
 		url, _ := s.Attr("href")
-		if strings.LastIndex(url, ".jpg") != -1 {
+		if strings.LastIndex(url, ".jpg") != -1 || strings.LastIndex(url, ".jpeg") != -1 {
 			imageURLList = append(imageURLList, url)
+			fmt.Printf("imageURLList add=%s\n", url)
 		}
 	})
 
@@ -54,6 +55,7 @@ func MatomeToStoryList(URL string) ([]StoryItem, error) {
 
 		storyTitleList = append(storyTitleList, title)
 		storyNumList = append(storyNumList, num)
+		fmt.Printf("storyTitleList add=%s\n", title)
 	}
 
 	//画像とタイトルをひとまとめにする
