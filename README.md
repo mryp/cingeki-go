@@ -16,3 +16,7 @@ DB関連
 HTMLパーサ
 
 * https://github.com/PuerkitoBio/goquery
+
+設定ファイル
+
+* https://github.com/BurntSushi/toml

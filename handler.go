@@ -10,6 +10,8 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
+
+	"github.com/mryp/cingeki-go/config"
 )
 
 const (
@@ -188,8 +190,9 @@ func StoryHandler(c echo.Context) error {
 			res.NextID = numberRecordList[numberIndex+1].Number
 		}
 	}
+	serverConfig := config.GetConfig().Server
 	res.Title = record.Title
-	res.URL = c.Scheme() + "://" + c.Request().Host + "/api/image/" + strconv.Itoa(record.Number)
+	res.URL = c.Scheme() + "://" + serverConfig.HostName + "/api/image/" + strconv.Itoa(record.Number)
 	return c.JSON(http.StatusOK, res)
 }
 

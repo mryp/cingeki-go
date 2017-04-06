@@ -1,0 +1,13 @@
+[Log]
+Output = "stream"
+
+[Server]
+PortNum  = 8080
+HostName = "localhost:8080"
+
+[DB]
+UserID     = "root"
+Password   = "root"
+HostName   = "127.0.0.1"
+PortNumber = "3306"
+Name       = "cingekigo"
